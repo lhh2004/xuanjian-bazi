@@ -1,0 +1,923 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <script>
+  (function(){
+    var ua=navigator.userAgent.toLowerCase();
+    var isWeChat=ua.indexOf('micromessenger')!==-1;
+    var isQQ=ua.indexOf('qq/')!==-1||ua.indexOf('qqbrowser')!==-1;
+    if(isWeChat||isQQ){
+      document.documentElement.classList.add('wx-tip-active');
+      var b=document.createElement('div');
+      b.id='wx-tip-bar';
+      b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#1f5948;color:#fff;padding:8px 16px;font-size:12px;text-align:center;font-family:serif;line-height:1.6;';
+      b.innerHTML='提示：如遇功能异常，请点击右上角 ··· 选择「在浏览器打开」以获得完整体验';
+      var closeBtn=document.createElement('span');
+      closeBtn.textContent='×';
+      closeBtn.style.cssText='position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:18px;cursor:pointer;padding:4px 8px;';
+      closeBtn.onclick=function(){b.remove()};
+      b.appendChild(closeBtn);
+      document.addEventListener('DOMContentLoaded',function(){document.body.insertBefore(b,document.body.firstChild)});
+    }
+  })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f1ea">
+  <meta name="description" content="玄鉴八字：节气定年月、精确四柱、行运与传统文化 AI 研判工具">
+  <meta name="application-name" content="玄鉴八字">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="玄鉴八字">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta property="og:title" content="玄鉴八字">
+  <meta property="og:description" content="四柱排盘、行运、神煞与多法合参">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=refined%20Chinese%20bazi%20astrology%20application%20icon%2C%20cinnabar%20seal%20on%20warm%20white%20rice%20paper%2C%20subtle%20five%20elements%20color%20accents%2C%20centered%20composition%2C%20no%20latin%20text%2C%20professional%20mobile%20app%20branding&image_size=square">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <title>玄鉴 · 命理研判工作台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css?v=2.1.1">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-button mobile-back" id="mobile-back" type="button" aria-label="返回" title="返回">
+        <i data-lucide="chevron-left"></i>
+      </button>
+      <a class="brand" href="#overview" aria-label="玄鉴首页">
+        <span class="brand-seal">玄</span>
+        <span>
+          <strong>玄鉴八字</strong>
+          <small>命理研判工作台</small>
+        </span>
+      </a>
+      <nav class="top-nav" aria-label="主导航">
+        <button class="top-nav-item active" data-view="overview" data-mobile-label="专业细盘" type="button">命盘总览</button>
+        <button class="top-nav-item" data-view="fortune" data-mobile-label="基本排盘" type="button">行运推演</button>
+        <button class="top-nav-item" data-view="reports" data-mobile-label="基本信息" type="button">专题研判</button>
+        <button class="top-nav-item" data-view="divination" type="button">诸术合参</button>
+        <button class="top-nav-item" data-view="ai" data-mobile-label="断事笔记" type="button">AI 研判</button>
+      </nav>
+      <div class="top-actions">
+        <button class="icon-button" id="search-button" type="button" aria-label="搜索术语" title="搜索术语">
+          <i data-lucide="search"></i>
+        </button>
+        <button class="icon-button" id="install-guide-button" type="button" aria-label="安装到手机" title="安装到手机">
+          <i data-lucide="smartphone"></i>
+        </button>
+        <button class="icon-button" id="theme-button" type="button" aria-label="切换显示模式" title="切换显示模式">
+          <i data-lucide="moon"></i>
+        </button>
+        <button class="member-entry-button" id="member-entry-button" type="button">
+          <i data-lucide="crown"></i>
+          <span id="member-entry-label">会员中心</span>
+        </button>
+        <button class="new-chart-button" id="new-chart-button" type="button">
+          <i data-lucide="plus"></i>
+          <span>新建命例</span>
+        </button>
+      </div>
+      <button class="icon-button mobile-menu" id="mobile-menu" type="button" aria-label="更多功能" title="更多功能">
+        <i data-lucide="ellipsis"></i>
+      </button>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-section profile-section">
+        <div class="section-label">当前命例</div>
+        <button class="profile-switcher" id="profile-switcher" type="button">
+          <span class="avatar" id="sidebar-avatar">林</span>
+          <span class="profile-copy">
+            <strong id="sidebar-name">林清和</strong>
+            <small id="sidebar-meta">女命 · 1992年生</small>
+          </span>
+          <i data-lucide="chevrons-up-down"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-label">命理分析</div>
+        <nav class="side-nav" aria-label="命理分析">
+          <button class="side-nav-item active" data-view="overview" type="button">
+            <i data-lucide="layout-dashboard"></i><span>命盘总览</span>
+          </button>
+          <button class="side-nav-item" data-view="fortune" type="button">
+            <i data-lucide="calendar-range"></i><span>行运推演</span>
+            <span class="nav-badge">今</span>
+          </button>
+          <button class="side-nav-item" data-view="reports" type="button">
+            <i data-lucide="message-square-text"></i><span>AI 研判</span>
+            <i class="nav-lock" data-lucide="lock"></i>
+          </button>
+          <button class="side-nav-item" data-view="spirits" type="button">
+            <i data-lucide="sparkles"></i><span>神煞十神</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-label">术数工具 <span class="member-lock-tag" id="divination-lock-tag">会员专享</span></div>
+        <nav class="side-nav" aria-label="术数工具">
+          <button class="side-nav-item" data-view="divination" data-method="zhouyi" type="button">
+            <i data-lucide="coins"></i><span>易经 · 六爻</span><i class="nav-lock" data-lucide="lock"></i>
+          </button>
+          <button class="side-nav-item" data-view="divination" data-method="meihua" type="button">
+            <i data-lucide="flower-2"></i><span>梅花易数</span><i class="nav-lock" data-lucide="lock"></i>
+          </button>
+          <button class="side-nav-item" data-view="divination" data-method="qimen" type="button">
+            <i data-lucide="grid-3x3"></i><span>奇门遁甲</span><i class="nav-lock" data-lucide="lock"></i>
+          </button>
+          <button class="side-nav-item" data-view="divination" data-method="liuren" type="button">
+            <i data-lucide="orbit"></i><span>大六壬</span><i class="nav-lock" data-lucide="lock"></i>
+          </button>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-label">资料管理</div>
+        <nav class="side-nav" aria-label="资料管理">
+          <button class="side-nav-item" data-view="archives" type="button">
+            <i data-lucide="archive"></i><span>命例档案</span>
+            <span class="nav-count" id="archive-count">1</span>
+          </button>
+          <button class="side-nav-item" id="glossary-button" type="button">
+            <i data-lucide="book-open"></i><span>术语典藏</span>
+          </button>
+          <button class="side-nav-item member-nav-item" id="member-nav-button" type="button">
+            <i data-lucide="crown"></i><span>会员中心</span>
+            <span class="member-badge" id="member-nav-badge"></span>
+          </button>
+          <button class="side-nav-item exclusive-nav-item hidden" id="exclusive-nav-button" type="button">
+            <i data-lucide="gem"></i><span>专属特权</span>
+            <span class="exclusive-dot"></span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="sidebar-visual">
+        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=traditional%20Chinese%20ink%20painting%20of%20mountain%20ridge%20and%20mist%2C%20minimal%20xieyi%20style%2C%20warm%20rice%20paper%20texture%2C%20subtle%20cinnabar%20seal%2C%20no%20text%2C%20refined%20editorial%20composition&image_size=landscape_4_3" alt="水墨山峦" width="480" height="360" loading="lazy" decoding="async">
+        <p>观象 · 取用 · 参时</p>
+      </div>
+
+      <button class="legal-link" id="legal-button" type="button">
+        <i data-lucide="shield-check"></i>
+        <span>文化研究声明</span>
+      </button>
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <main class="workspace" id="workspace">
+      <!-- 主Tab导航（命盘、行运、AI三个核心页面滑动切换） -->
+      <nav class="main-tabs" id="main-tabs" aria-label="核心功能">
+        <button class="main-tab active" data-main-tab="overview" type="button">
+          <i data-lucide="layout-dashboard"></i>
+          <span>命盘</span>
+        </button>
+        <button class="main-tab" data-main-tab="fortune" type="button">
+          <i data-lucide="calendar-range"></i>
+          <span>行运</span>
+        </button>
+        <button class="main-tab" data-main-tab="reports" type="button">
+          <i data-lucide="message-square-text"></i>
+          <span>AI</span>
+        </button>
+      </nav>
+      <section class="view active" id="view-welcome" data-view-panel="welcome">
+        <div class="welcome-hero">
+          <img class="welcome-logo" src="./icon-192.png" alt="玄鉴八字" width="96" height="96">
+          <h1>玄鉴八字</h1>
+          <p class="welcome-sub">节气定年月 · 精确四柱 · 神煞详解 · 称骨论命 · 大运流年</p>
+          <button class="welcome-cta" id="welcome-new-chart" type="button">
+            <i data-lucide="plus"></i>
+            <span>新建命例 · 开始排盘</span>
+          </button>
+        </div>
+        <div class="welcome-recent" id="welcome-recent"></div>
+        <div class="welcome-features">
+          <div class="welcome-feature">
+            <i data-lucide="layout-dashboard"></i>
+            <strong>专业排盘</strong>
+            <span>四柱详盘 · 藏干十神 · 胎元命宫</span>
+          </div>
+          <div class="welcome-feature">
+            <i data-lucide="sparkles"></i>
+            <strong>神煞详解</strong>
+            <span>百余神煞逐条白话释义</span>
+          </div>
+          <div class="welcome-feature">
+            <i data-lucide="scale"></i>
+            <strong>称骨论命</strong>
+            <span>袁天罡称骨 · 五维人生解析</span>
+          </div>
+          <div class="welcome-feature">
+            <i data-lucide="calendar-range"></i>
+            <strong>行运推演</strong>
+            <span>大运流年 · 财富格局详析</span>
+          </div>
+        </div>
+        <div class="welcome-install-hint" id="welcome-install-hint">
+          <i data-lucide="smartphone"></i>
+          <span>把玄鉴八字安装到手机主屏幕，像 App 一样全屏离线使用</span>
+          <button class="text-button" id="welcome-install-button" type="button">查看安装方法</button>
+        </div>
+      </section>
+
+      <section class="view" id="view-overview" data-view-panel="overview">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">四柱命理 · 子平法</div>
+            <h1>命盘总览</h1>
+            <p id="profile-summary">公历 1992年4月18日 巳时 · 浙江杭州</p>
+          </div>
+          <div class="heading-actions">
+            <button class="button primary" id="new-chart-overview-btn" type="button">
+              <i data-lucide="plus"></i><span>新建命例</span>
+            </button>
+            <button class="button ghost" id="edit-profile-button" type="button">
+              <i data-lucide="sliders-horizontal"></i><span>校对信息</span>
+            </button>
+            <button class="button ghost" id="save-profile-button" type="button">
+              <i data-lucide="bookmark"></i><span>保存</span>
+            </button>
+            <button class="button ghost" id="share-profile-button" type="button">
+              <i data-lucide="share-2"></i><span>分享命盘</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 排盘引导步骤条 -->
+        <div class="chart-step-guide" id="chart-step-guide" hidden>
+          <div class="step-track">
+            <div class="step-item active" data-step="1">
+              <span class="step-num">1</span>
+              <span class="step-label">专业细盘</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-item" data-step="2">
+              <span class="step-num">2</span>
+              <span class="step-label">基本解读</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-item" data-step="3">
+              <span class="step-num">3</span>
+              <span class="step-label">AI 深度研判</span>
+            </div>
+          </div>
+          <div class="step-actions">
+            <button class="button text small" id="step-skip-btn" type="button">跳过引导</button>
+            <button class="button primary small" id="step-next-btn" type="button">
+              <span>下一步：基本解读</span>
+              <i data-lucide="arrow-down"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="metric-strip" id="metric-strip"></div>
+
+        <div class="overview-grid">
+          <section class="panel chart-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="panel-kicker">原局</span>
+                <h2>四柱命盘</h2>
+              </div>
+              <div class="panel-tools">
+                <span class="verification-chip" id="chart-verification"><i data-lucide="badge-check"></i>历法校验</span>
+                <button class="mini-control active" data-chart-calendar="solar" type="button">公历</button>
+                <button class="mini-control" data-chart-calendar="lunar" type="button">农历</button>
+                <button class="mini-control active" data-chart-mode="full" type="button">详盘</button>
+                <button class="mini-control" data-chart-mode="simple" type="button">简盘</button>
+                <button class="icon-button compact" id="chart-download" type="button" aria-label="导出命盘" title="导出命盘">
+                  <i data-lucide="download"></i>
+                </button>
+              </div>
+            </div>
+            <div class="chart-lunar-bar" id="chart-lunar-bar"></div>
+            <div class="hour-unknown-notice" id="hour-unknown-notice" hidden>
+              <i data-lucide="alert-triangle"></i>
+              <span><strong>时柱未知</strong>：当前排盘时柱为占位值，仅供参考。AI研判与袁天罡称骨等需要完整时辰信息的功能将无法准确计算。</span>
+            </div>
+            <div class="mobile-bazi-chart" id="mobile-bazi-chart"></div>
+            <div class="bazi-chart" id="bazi-chart"></div>
+            <div class="mobile-fortune-board" id="mobile-fortune-board"></div>
+            <div class="chart-legend">
+              <span><i class="element-dot wood"></i>木</span>
+              <span><i class="element-dot fire"></i>火</span>
+              <span><i class="element-dot earth"></i>土</span>
+              <span><i class="element-dot metal"></i>金</span>
+              <span><i class="element-dot water"></i>水</span>
+              <button class="text-button" data-open-glossary="十神" type="button">十神关系释义 <i data-lucide="arrow-up-right"></i></button>
+            </div>
+          </section>
+
+          <aside class="panel insight-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="panel-kicker">提要</span>
+                <h2>命局提要</h2>
+              </div>
+              <span class="status-chip">多法合参</span>
+            </div>
+            <div class="day-master-card" id="day-master-card"></div>
+            <div class="insight-list" id="insight-list"></div>
+            <button class="button subtle full" data-view="reports" type="button">
+              查看七派合参报告 <i data-lucide="arrow-right"></i>
+            </button>
+          </aside>
+
+          <section class="panel element-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="panel-kicker">能量结构</span>
+                <h2>五行旺衰</h2>
+              </div>
+              <button class="text-button" data-open-glossary="旺衰" type="button">判定依据</button>
+            </div>
+            <div class="element-content" id="element-content"></div>
+          </section>
+
+          <section class="panel relations-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="panel-kicker">生克制化</span>
+                <h2>干支作用</h2>
+              </div>
+              <span class="muted" id="relation-count">0项关系</span>
+            </div>
+            <div class="relation-list" id="relation-list"></div>
+          </section>
+        </div>
+
+        <section class="panel current-fortune-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">当下行运</span>
+              <h2 id="current-fortune-title">当前大运与流年</h2>
+            </div>
+            <button class="button ghost small" data-view="fortune" type="button">进入精细推演 <i data-lucide="arrow-right"></i></button>
+          </div>
+          <div class="current-fortune-content" id="current-fortune-content"></div>
+        </section>
+
+        <section class="panel full-analysis-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">系统解析</span>
+              <h2>命局全面解析</h2>
+            </div>
+            <span class="status-chip">格局 · 旺衰 · 配置</span>
+          </div>
+          <div class="full-analysis-content" id="full-analysis"></div>
+        </section>
+
+        <section class="panel overview-fortune-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">行运推演</span>
+              <h2>大运流年 · 运势轨迹</h2>
+            </div>
+            <button class="button ghost small" data-view="fortune" type="button">精细推演 <i data-lucide="arrow-right"></i></button>
+          </div>
+          <div class="overview-fortune-track" id="overview-fortune-track"></div>
+          <div class="overview-fortune-detail" id="overview-fortune-detail"></div>
+        </section>
+
+        <section class="panel overview-spirits-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">十神 · 神煞</span>
+              <h2>十神配置与神煞释义</h2>
+            </div>
+            <button class="text-button" data-open-glossary="十神" type="button">术语释义 <i data-lucide="arrow-up-right"></i></button>
+          </div>
+          <div class="overview-ten-gods" id="overview-ten-gods"></div>
+          <div class="overview-spirit-columns" id="overview-spirit-columns"></div>
+        </section>
+
+        <section class="panel fortune-synthesis-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">当下研判</span>
+              <h2>当前运势综合分析</h2>
+            </div>
+            <span class="status-chip" id="fortune-synthesis-chip">岁运并参</span>
+          </div>
+          <div class="fortune-synthesis-content" id="fortune-synthesis"></div>
+          <div class="wealth-heading">
+            <span class="panel-kicker">财富格局专项</span>
+            <h3>无论贫富贵贱 · 五维详析</h3>
+          </div>
+          <div class="wealth-analysis" id="wealth-analysis"></div>
+        </section>
+
+        <section class="panel chenggu-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">袁天罡称骨算命</span>
+              <h2>称骨论命</h2>
+            </div>
+            <span class="status-chip">古法参证</span>
+          </div>
+          <div class="chenggu-content" id="chenggu-content"></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-fortune" data-view-panel="fortune">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">大运 · 流年 · 流月 · 流日 · 流时</div>
+            <h1>行运推演</h1>
+            <p>岁运流转，神煞相随，观五行进退而知吉凶应期。</p>
+          </div>
+          <div class="heading-actions">
+            <button class="button ghost" id="fortune-today" type="button"><i data-lucide="locate-fixed"></i><span>今日</span></button>
+          </div>
+        </div>
+        <div class="hour-unknown-notice" id="fortune-hour-unknown-notice" hidden>
+          <i data-lucide="alert-triangle"></i>
+          <span><strong>时柱未知</strong>：大运起运时间的精确计算依赖出生时辰。当前大运排盘基于默认时辰推算，可能存在偏差，仅供参考。</span>
+        </div>
+        <div class="fortune-level-switcher">
+          <button class="level-tab active" data-level="dayun" type="button">
+            <i data-lucide="mountain-snow"></i>
+            <span>大运</span>
+          </button>
+          <button class="level-tab" data-level="year" type="button">
+            <i data-lucide="sun"></i>
+            <span>流年</span>
+          </button>
+          <button class="level-tab" data-level="month" type="button">
+            <i data-lucide="moon"></i>
+            <span>流月</span>
+          </button>
+          <button class="level-tab" data-level="day" type="button">
+            <i data-lucide="calendar"></i>
+            <span>流日</span>
+          </button>
+          <button class="level-tab" data-level="hour" type="button">
+            <i data-lucide="clock"></i>
+            <span>流时</span>
+          </button>
+        </div>
+        <div class="fortune-nav-row">
+          <button class="fortune-nav-btn" id="fortune-prev" type="button">
+            <i data-lucide="chevron-left"></i>
+          </button>
+          <div class="fortune-current-label">
+            <span id="fortune-current-label">加载中...</span>
+          </div>
+          <button class="fortune-nav-btn" id="fortune-next" type="button">
+            <i data-lucide="chevron-right"></i>
+          </button>
+        </div>
+        <section class="panel fortune-timeline-panel">
+          <div class="fortune-timeline-cards" id="fortune-timeline"></div>
+        </section>
+        <section class="panel fortune-detail-panel">
+          <div class="panel-heading">
+            <div><span class="panel-kicker">当前选中</span><h2 id="fortune-detail-title">—</h2></div>
+            <span class="fortune-period-badge" id="fortune-detail-badge">—</span>
+          </div>
+          <div class="fortune-detail-content">
+            <div class="fortune-detail-row">
+              <span class="fortune-detail-label">天干地支</span>
+              <span class="fortune-detail-value" id="fortune-detail-pillar">—</span>
+            </div>
+            <div class="fortune-detail-row">
+              <span class="fortune-detail-label">十神</span>
+              <span class="fortune-detail-value" id="fortune-detail-gods">—</span>
+            </div>
+            <div class="fortune-detail-row">
+              <span class="fortune-detail-label">纳音</span>
+              <span class="fortune-detail-value" id="fortune-detail-nayin">—</span>
+            </div>
+            <div class="fortune-detail-row fortune-spirits-row">
+              <span class="fortune-detail-label">神煞</span>
+              <div class="fortune-spirits-list" id="fortune-detail-spirits">—</div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="view-reports" data-view-panel="reports">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">命盘数据 · AI 深度合参</div>
+            <h1>AI 研判</h1>
+            <p>一键复制专业命盘数据与提示词，粘贴到豆包、DeepSeek 等任意大模型获取深度分析。</p>
+          </div>
+          <div class="heading-actions">
+            <button class="button ghost" id="ai-copy-chart" type="button"><i data-lucide="copy"></i><span>复制命盘数据</span></button>
+          </div>
+        </div>
+        <div class="hour-unknown-notice" id="ai-hour-unknown-notice" hidden>
+          <i data-lucide="alert-triangle"></i>
+          <span><strong>时柱未知</strong>：当前命盘缺少时辰信息，AI 推演无法进行完整的四柱分析（时柱对应子女宫、晚年运、玄秘等）。建议补充出生时辰以获得更准确的分析结果。</span>
+        </div>
+        <div class="ai-reports-layout">
+          <section class="panel ai-chart-data-panel">
+            <div class="panel-heading">
+              <div><span class="panel-kicker">当前命盘 · 结构化数据</span><h2>命盘完整信息</h2></div>
+              <button class="button primary small" id="ai-copy-chart-btn" type="button"><i data-lucide="copy"></i>一键复制</button>
+            </div>
+            <div class="ai-chart-data" id="ai-chart-data"></div>
+            <p class="ai-data-hint">将以上命盘数据连同下方专题提示词一起发给 AI，即可获得针对性分析。</p>
+          </section>
+          <section class="panel ai-topics-panel">
+            <div class="panel-heading">
+              <div><span class="panel-kicker">八大专题 · 专业提示词</span><h2>选择分析方向</h2></div>
+            </div>
+            <div class="ai-topic-grid" id="ai-topic-grid"></div>
+          </section>
+          <section class="panel ai-prompt-panel">
+            <div class="panel-heading">
+              <div><span class="panel-kicker">AI 提示词</span><h2 id="ai-prompt-title">事业财运分析</h2></div>
+              <div class="prompt-actions">
+                <button class="button ghost small" id="ai-copy-prompt-btn" type="button"><i data-lucide="copy"></i>复制提示词</button>
+                <button class="button primary small" id="ai-copy-all-btn" type="button"><i data-lucide="clipboard-copy"></i>复制全部（命盘+提示词）</button>
+              </div>
+            </div>
+            <div class="ai-prompt-box">
+              <pre id="ai-prompt-content"></pre>
+            </div>
+            <div class="ai-usage-tip">
+              <i data-lucide="lightbulb"></i>
+              <div>
+                <strong>使用方法：</strong>
+                点击「复制全部」→ 打开豆包 / DeepSeek / Kimi 等 AI 应用 → 粘贴发送 → 即可获得该专题的深度命理分析。
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-spirits" data-view-panel="spirits">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">十神取象 · 神煞辅证</div>
+            <h1>神煞十神</h1>
+            <p>以五行生克为主，神煞只作象义补充，不独立定吉凶。</p>
+          </div>
+        </div>
+        <section class="panel">
+          <div class="panel-heading">
+            <div><span class="panel-kicker">十神映射</span><h2>日主与全局关系</h2></div>
+          </div>
+          <div class="ten-god-grid" id="ten-god-grid"></div>
+        </section>
+        <section class="panel section-gap">
+          <div class="panel-heading">
+            <div><span class="panel-kicker">原局神煞</span><h2>神煞分布</h2></div>
+          </div>
+          <div class="spirit-table" id="spirit-table"></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-divination" data-view-panel="divination">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">观时取象 · 一事一占</div>
+            <h1>诸术合参</h1>
+            <p>选取适合问题时效与性质的术数模型，建立独立占测记录。</p>
+          </div>
+        </div>
+        <div class="method-grid" id="method-grid"></div>
+        <section class="panel divination-workbench" id="divination-workbench">
+          <div class="divination-empty">
+            <span class="empty-symbol">卦</span>
+            <h2>选择一门术数开始</h2>
+            <p>占问需具体、有时限，结果不替代医疗、法律或投资决策。</p>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="view-archives" data-view-panel="archives">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">本地存储 · 私密管理</div>
+            <h1>命例档案</h1>
+            <p>命例仅保存在当前浏览器，可随时导出或删除。</p>
+          </div>
+          <div class="heading-actions">
+            <button class="button ghost" id="import-archive" type="button"><i data-lucide="file-up"></i><span>导入</span></button>
+            <button class="button primary" id="archive-new" type="button"><i data-lucide="plus"></i><span>新建命例</span></button>
+            <input type="file" id="archive-file-input" accept="application/json" hidden>
+          </div>
+        </div>
+        <div class="archive-toolbar">
+          <label class="search-field">
+            <i data-lucide="search"></i>
+            <input id="archive-search" type="search" placeholder="检索姓名、八字或标签">
+          </label>
+          <button class="button ghost small" id="export-archives" type="button"><i data-lucide="download"></i>导出全部</button>
+        </div>
+        <div class="archive-grid" id="archive-grid"></div>
+      </section>
+
+      <footer class="app-footer">
+        <span>玄鉴 · 传统文化研究工具</span>
+        <button id="footer-legal" type="button">使用边界与隐私</button>
+        <span>数据仅存于本机</span>
+      </footer>
+    </main>
+
+    <button class="floating-menu-btn" id="floating-menu-btn" type="button" aria-label="打开侧边栏">
+      <i data-lucide="menu"></i>
+    </button>
+  </div>
+
+  <div class="modal-backdrop" id="profile-modal" aria-hidden="true">
+    <div class="modal profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+      <div class="modal-header">
+        <div>
+          <span class="panel-kicker">命例信息</span>
+          <h2 id="profile-modal-title">录入四柱</h2>
+        </div>
+        <button class="icon-button modal-close" type="button" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button>
+      </div>
+      <form id="profile-form">
+        <div class="form-grid">
+          <label class="field span-2">
+            <span>命例称呼</span>
+            <input id="input-name" name="name" type="text" maxlength="12" required>
+          </label>
+          <fieldset class="field span-2">
+            <legend>性别</legend>
+            <div class="segmented-control form-segment">
+              <label><input type="radio" name="gender" value="男"><span>男命</span></label>
+              <label><input type="radio" name="gender" value="女"><span>女命</span></label>
+            </div>
+          </fieldset>
+          <fieldset class="field span-4">
+            <legend>排盘来源</legend>
+            <div class="segmented-control form-segment three-segment">
+              <label><input type="radio" name="calculationMode" value="calendar" checked><span>公历精准排盘</span></label>
+              <label><input type="radio" name="calculationMode" value="lunar"><span>农历精准排盘</span></label>
+              <label><input type="radio" name="calculationMode" value="manual"><span>已知四柱录入</span></label>
+            </div>
+          </fieldset>
+          <div class="field span-4" id="solar-date-field">
+            <span>公历出生日期时间（东八区）</span>
+            <button class="datetime-trigger" id="datetime-trigger" type="button">
+              <i data-lucide="calendar-clock"></i>
+              <span><strong id="datetime-date-label">1990年1月1日</strong><small id="datetime-time-label">12:00 · 午时</small></span>
+              <i data-lucide="chevron-right"></i>
+            </button>
+            <label class="hour-unknown-toggle">
+              <input type="checkbox" id="hour-unknown">
+              <span>时柱未知（不提供出生时辰）</span>
+            </label>
+            <input id="input-date" name="birthDate" type="hidden" required>
+            <input id="input-time" name="birthTime" type="hidden" required>
+          </div>
+          <div class="field span-4" id="lunar-date-field" style="display:none;">
+            <span>农历出生日期时间（东八区）</span>
+            <div class="lunar-picker-row">
+              <select id="lunar-year" class="lunar-select">
+              </select>
+              <select id="lunar-month" class="lunar-select">
+              </select>
+              <select id="lunar-day" class="lunar-select">
+              </select>
+            </div>
+            <div class="lunar-time-row">
+              <select id="lunar-hour" class="lunar-select small">
+              </select>
+              <select id="lunar-minute" class="lunar-select small">
+              </select>
+              <span class="lunar-branch-label" id="lunar-branch-label">午时</span>
+            </div>
+            <input id="lunar-leap" type="hidden" value="0">
+            <div class="lunar-solar-hint" id="lunar-solar-hint"></div>
+          </div>
+          <div class="field span-4 location-field">
+            <span>出生地</span>
+            <div class="region-picker-row">
+              <select id="region-province" class="region-select">
+                <option value="">请选择省份</option>
+              </select>
+              <select id="region-city" class="region-select">
+                <option value="">请选择城市</option>
+              </select>
+              <select id="region-district" class="region-select">
+                <option value="">请选择区县</option>
+              </select>
+            </div>
+            <div class="region-search-wrap">
+              <div class="region-search-box">
+                <i data-lucide="search" class="region-search-icon"></i>
+                <input id="region-search-input" type="text" placeholder="或直接输入城市名搜索…" autocomplete="off">
+              </div>
+              <div class="region-search-dropdown" id="region-search-dropdown" hidden></div>
+            </div>
+            <input id="input-location" name="location" type="hidden">
+          </div>
+          <label class="field span-2 true-solar-field">
+            <span>真太阳时</span>
+            <span class="toggle-row">
+              <input id="input-true-solar" type="checkbox">
+              <span>按出生地经度修正</span>
+            </span>
+          </label>
+          <label class="field span-2">
+            <span>东经（度）</span>
+            <input id="input-longitude" type="number" min="73" max="135" step="0.01" value="120" inputmode="decimal">
+          </label>
+          <fieldset class="field span-4">
+            <legend>子时换日规则</legend>
+            <div class="segmented-control form-segment">
+              <label><input type="radio" name="sect" value="1"><span>23:00 换日</span></label>
+              <label><input type="radio" name="sect" value="2"><span>00:00 换日</span></label>
+            </div>
+          </fieldset>
+          <fieldset class="field span-4">
+            <legend>年柱分界</legend>
+            <div class="segmented-control form-segment">
+              <label><input type="radio" name="year-boundary" value="lichun"><span>立春为界</span></label>
+              <label><input type="radio" name="year-boundary" value="spring"><span>正月初一</span></label>
+            </div>
+            <small class="field-hint">立春到春节之间出生者，两种排法年柱可能不同</small>
+          </fieldset>
+        </div>
+        <div class="form-divider">
+          <span>四柱校验</span>
+          <small id="calculation-hint">日期变化后自动按节气重排</small>
+        </div>
+        <div class="calculation-result" id="calculation-result"></div>
+        <label class="field bazi-paste">
+          <span>手工四柱复核</span>
+          <div class="bazi-paste-control">
+            <i data-lucide="scan-text"></i>
+            <input id="input-bazi" type="text" maxlength="20" placeholder="壬申 甲辰 乙丑 辛巳" autocomplete="off">
+            <span id="bazi-recognition-state">待识别</span>
+          </div>
+        </label>
+        <div class="pillars-input">
+          <label class="pillar-input"><span>年柱</span><input id="pillar-year" maxlength="2" inputmode="text" required><small>例：壬申</small></label>
+          <label class="pillar-input"><span>月柱</span><input id="pillar-month" maxlength="2" inputmode="text" required><small>例：甲辰</small></label>
+          <label class="pillar-input"><span>日柱</span><input id="pillar-day" maxlength="2" inputmode="text" required><small>例：乙丑</small></label>
+          <label class="pillar-input"><span>时柱</span><input id="pillar-hour" maxlength="2" inputmode="text" required><small>例：辛巳</small></label>
+        </div>
+        <div class="validation-message" id="form-validation" role="alert"></div>
+        <div class="modal-actions">
+          <button class="button ghost modal-close" type="button">取消</button>
+          <button class="button primary" type="submit"><i data-lucide="sparkles"></i>生成命盘</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="datetime-modal" aria-hidden="true">
+    <div class="modal datetime-modal-card" role="dialog" aria-modal="true" aria-labelledby="datetime-title">
+      <div class="modal-header">
+        <div>
+          <span class="panel-kicker">快速滚动定位</span>
+          <h2 id="datetime-title">选择出生时间</h2>
+        </div>
+        <button class="icon-button modal-close" type="button" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button>
+      </div>
+      <div class="wheel-picker" id="wheel-picker">
+        <div class="wheel-selection" aria-hidden="true"></div>
+        <div class="wheel-column" data-wheel="year" aria-label="年份"></div>
+        <div class="wheel-column" data-wheel="month" aria-label="月份"></div>
+        <div class="wheel-column" data-wheel="day" aria-label="日期"></div>
+        <div class="wheel-column" data-wheel="hour" aria-label="小时"></div>
+        <div class="wheel-column" data-wheel="minute" aria-label="分钟"></div>
+      </div>
+      <div class="wheel-labels" aria-hidden="true"><span>年</span><span>月</span><span>日</span><span>时</span><span>分</span></div>
+      <div class="wheel-shortcuts" aria-label="年份快捷调整">
+        <button type="button" data-year-step="-10">前十年</button>
+        <button type="button" data-year-current>今年</button>
+        <button type="button" data-year-step="10">后十年</button>
+        <input type="number" id="year-jump-input" min="1900" max="2100" placeholder="输入年份跳转" inputmode="numeric">
+        <button type="button" id="year-jump-button">跳转</button>
+      </div>
+      <div class="wheel-summary" id="wheel-summary"></div>
+      <div class="modal-actions">
+        <button class="button ghost modal-close" type="button">取消</button>
+        <button class="button primary" id="datetime-confirm" type="button">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="history-modal" aria-hidden="true">
+    <div class="modal history-modal-card" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+      <div class="modal-header">
+        <div>
+          <span class="panel-kicker">本机自动保存</span>
+          <h2 id="history-modal-title">命盘生成历史</h2>
+        </div>
+        <button class="icon-button modal-close" type="button" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button>
+      </div>
+      <div class="history-profile-summary" id="history-profile-summary"></div>
+      <div class="generation-history-list" id="generation-history-list"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="glossary-modal" aria-hidden="true">
+    <div class="modal glossary-modal-card" role="dialog" aria-modal="true" aria-labelledby="glossary-title">
+      <div class="modal-header">
+        <div>
+          <span class="panel-kicker">术语典藏</span>
+          <h2 id="glossary-title">命理术语</h2>
+        </div>
+        <button class="icon-button modal-close" type="button" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button>
+      </div>
+      <label class="search-field modal-search">
+        <i data-lucide="search"></i>
+        <input id="glossary-search" type="search" placeholder="检索术语">
+      </label>
+      <div class="glossary-list" id="glossary-list"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="legal-modal" aria-hidden="true">
+    <div class="modal legal-modal-card" role="dialog" aria-modal="true" aria-labelledby="legal-title">
+      <div class="modal-header">
+        <div>
+          <span class="panel-kicker">使用边界</span>
+          <h2 id="legal-title">文化研究与隐私声明</h2>
+        </div>
+        <button class="icon-button modal-close" type="button" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button>
+      </div>
+      <div class="legal-content">
+        <p>本应用用于传统术数文化研究、知识整理与娱乐参考，不构成医疗诊断、心理咨询、法律意见、投资建议或人生决策依据。</p>
+        <p>命理结论具有解释性与流派差异。应用以用户录入且已校对的四柱为计算基础；涉及真太阳时、早晚子时、节气交接等边界情形，应由专业人士复核。</p>
+        <p>命例资料默认仅保存于当前浏览器的本地存储。分享功能会将必要字段编码到链接中，请取得相关人员同意后使用，避免录入身份证号、联系方式等敏感信息。</p>
+        <p>不得利用本应用实施迷信诈骗、歧视、恐吓，或对未成年人及其他易受影响人群作绝对化断言。</p>
+      </div>
+      <div class="modal-actions">
+        <button class="button primary modal-close" type="button">我已了解</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="member-modal" aria-hidden="true">
+    <div class="modal member-modal-card" role="dialog" aria-modal="true" aria-labelledby="member-modal-title">
+      <div class="modal-header">
+        <div>
+          <span class="panel-kicker">尊享服务</span>
+          <h2 id="member-modal-title">会员中心</h2>
+        </div>
+        <button class="icon-button modal-close" type="button" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button>
+      </div>
+      <div class="member-body" id="member-body"></div>
+    </div>
+  </div>
+
+  <!-- 专属特权模态框 -->
+  <div class="modal-backdrop" id="exclusive-modal" aria-hidden="true">
+    <div class="modal exclusive-modal-card" role="dialog" aria-modal="true" aria-labelledby="exclusive-modal-title">
+      <div class="modal-header">
+        <div>
+          <span class="panel-kicker exclusive-kicker">✦ 一人专属 ✦</span>
+          <h2 id="exclusive-modal-title">专属特权</h2>
+        </div>
+        <button class="icon-button modal-close" type="button" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button>
+      </div>
+      <div class="exclusive-body" id="exclusive-body"></div>
+    </div>
+  </div>
+
+  <!-- 支付弹窗 -->
+  <div class="modal-backdrop" id="payment-modal" aria-hidden="true">
+    <div class="modal payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+      <div class="modal-header">
+        <div>
+          <span class="panel-kicker" id="payment-modal-kicker">扫码支付</span>
+          <h2 id="payment-modal-title">微信支付</h2>
+        </div>
+        <button class="icon-button modal-close" type="button" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button>
+      </div>
+      <div class="payment-body" id="payment-body"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="install-modal" aria-hidden="true">
+    <div class="modal install-modal-card" role="dialog" aria-modal="true" aria-labelledby="install-modal-title">
+      <div class="modal-header">
+        <div>
+          <span class="panel-kicker">App 体验</span>
+          <h2 id="install-modal-title">安装到手机主屏幕</h2>
+        </div>
+        <button class="icon-button modal-close" type="button" aria-label="关闭" title="关闭"><i data-lucide="x"></i></button>
+      </div>
+      <div class="install-body" id="install-body"></div>
+    </div>
+  </div>
+
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+  <script src="./vendor/lucide.min.js"></script>
+  <script src="./vendor/lunar.js"></script>
+  <script src="./assets/china-regions.js"></script>
+  <script src="./calendar-engine.js?v=2.1.1"></script>
+  <script src="./app.js?v=3.0.0"></script>
+</body>
+</html>
