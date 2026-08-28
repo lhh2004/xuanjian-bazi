@@ -1,0 +1,10 @@
+{
+  "name": "玄鉴八字",
+  "short_name": "玄鉴",
+  "description": "四柱排盘、岁运、神煞与 AI 研判工具",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f0e9",
+  "theme_color": "#f4f1ea"
+}
