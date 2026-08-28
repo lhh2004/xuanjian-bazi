@@ -2271,13 +2271,13 @@
       const group = groups.find((item) => item.members.includes(rootBranch));
       return group ? group[key] : "";
     };
-    const peach = [lookupGroup(dayBranch, "peach"), lookupGroup(yearBranch, "peach")];
-    const horse = [lookupGroup(dayBranch, "horse"), lookupGroup(yearBranch, "horse")];
-    const canopy = [lookupGroup(dayBranch, "canopy"), lookupGroup(yearBranch, "canopy")];
-    const general = [lookupGroup(dayBranch, "general"), lookupGroup(yearBranch, "general")];
-    const calamity = [lookupGroup(dayBranch, "calamity"), lookupGroup(yearBranch, "calamity")];
-    const lost = [lookupGroup(dayBranch, "lost"), lookupGroup(yearBranch, "lost")];
-    const disaster = [lookupGroup(dayBranch, "disaster"), lookupGroup(yearBranch, "disaster")];
+    const peach = lookupGroup(yearBranch, "peach");
+    const horse = lookupGroup(yearBranch, "horse");
+    const canopy = lookupGroup(yearBranch, "canopy");
+    const general = lookupGroup(yearBranch, "general");
+    const calamity = lookupGroup(yearBranch, "calamity");
+    const lost = lookupGroup(yearBranch, "lost");
+    const disaster = lookupGroup(yearBranch, "disaster");
     const lonelyGroups = [
       { members: ["亥", "子", "丑"], lonely: "寅", widow: "戌" },
       { members: ["寅", "卯", "辰"], lonely: "巳", widow: "丑" },
@@ -2301,21 +2301,21 @@
     if (hasBranch(fuxing[dayStem]) || hasBranch(fuxing[yearStem])) result.push("福星贵人");
     if (jinyu[dayStem] === targetBranch) result.push("金舆");
     if (tianchu[dayStem] === targetBranch) result.push("天厨");
-    if (peach.includes(targetBranch)) result.push("桃花");
+    if (targetIndex !== 0 && peach === targetBranch) result.push("桃花");
     if (redCharm[dayStem] === targetBranch) result.push("红艳");
     if (redLuan[yearBranch] === targetBranch) result.push("红鸾");
     if (tianXi[yearBranch] === targetBranch) result.push("天喜");
-    if (horse.includes(targetBranch)) result.push("驿马");
-    if (canopy.includes(targetBranch)) result.push("华盖");
+    if (targetIndex !== 0 && horse === targetBranch) result.push("驿马");
+    if (targetIndex !== 0 && canopy === targetBranch) result.push("华盖");
     if (lu[dayStem] === targetBranch) result.push("禄神");
     if (blade[dayStem] === targetBranch) result.push("羊刃");
-    if (general.includes(targetBranch)) result.push("将星");
-    if (calamity.includes(targetBranch)) result.push("劫煞");
-    if (lost.includes(targetBranch)) result.push("亡神");
-    if (disaster.includes(targetBranch)) result.push("灾煞");
-    if (lonelyGroupYear?.lonely === targetBranch || lonelyGroupDay?.lonely === targetBranch) result.push("孤辰");
-    if (lonelyGroupYear?.widow === targetBranch || lonelyGroupDay?.widow === targetBranch) result.push("寡宿");
-    if (BRANCHES[mod(BRANCHES.findIndex((item) => item.name === monthBranch) - 3, 12)].name === targetBranch) {
+    if (targetIndex !== 0 && general === targetBranch) result.push("将星");
+    if (targetIndex !== 0 && calamity === targetBranch) result.push("劫煞");
+    if (targetIndex !== 0 && lost === targetBranch) result.push("亡神");
+    if (targetIndex !== 0 && disaster === targetBranch) result.push("灾煞");
+    if (targetIndex !== 0 && lonelyGroupYear?.lonely === targetBranch) result.push("孤辰");
+    if (targetIndex !== 0 && lonelyGroupYear?.widow === targetBranch) result.push("寡宿");
+    if (BRANCHES[mod(BRANCHES.findIndex((item) => item.name === monthBranch) - 1, 12)].name === targetBranch) {
       result.push("天医");
     }
 
@@ -2323,11 +2323,9 @@
     if (feiren[dayStem] === targetBranch) result.push("飞刃");
 
     const sangMenYearIdx = mod(BRANCHES.findIndex((item) => item.name === yearBranch) + 2, 12);
-    const sangMenDayIdx = mod(BRANCHES.findIndex((item) => item.name === dayBranch) + 2, 12);
-    if (BRANCHES[sangMenYearIdx].name === targetBranch || BRANCHES[sangMenDayIdx].name === targetBranch) result.push("丧门");
+    if (targetIndex !== 0 && BRANCHES[sangMenYearIdx].name === targetBranch) result.push("丧门");
     const diaoKeYearIdx = mod(BRANCHES.findIndex((item) => item.name === yearBranch) + 10, 12);
-    const diaoKeDayIdx = mod(BRANCHES.findIndex((item) => item.name === dayBranch) + 10, 12);
-    if (BRANCHES[diaoKeYearIdx].name === targetBranch || BRANCHES[diaoKeDayIdx].name === targetBranch) result.push("吊客");
+    if (targetIndex !== 0 && BRANCHES[diaoKeYearIdx].name === targetBranch) result.push("吊客");
 
     if (targetIndex === 0) {
       if (["戌", "亥"].includes(targetBranch) && gender !== "female") result.push("天罗地网");
@@ -2372,24 +2370,18 @@
     if (liuxia[dayStem] === targetBranch) result.push("流霞");
 
     const pimaYearIdx = mod(BRANCHES.findIndex((item) => item.name === yearBranch) + 4, 12);
-    const pimaDayIdx = mod(BRANCHES.findIndex((item) => item.name === dayBranch) + 4, 12);
-    if (BRANCHES[pimaYearIdx].name === targetBranch || BRANCHES[pimaDayIdx].name === targetBranch) result.push("披麻");
+    if (targetIndex !== 0 && BRANCHES[pimaYearIdx].name === targetBranch) result.push("披麻");
 
     const gouYearIdx = mod(BRANCHES.findIndex((item) => item.name === yearBranch) + 3, 12);
     const jiaoYearIdx = mod(BRANCHES.findIndex((item) => item.name === yearBranch) - 3, 12);
-    const gouDayIdx = mod(BRANCHES.findIndex((item) => item.name === dayBranch) + 3, 12);
-    const jiaoDayIdx = mod(BRANCHES.findIndex((item) => item.name === dayBranch) - 3, 12);
-    if (BRANCHES[gouYearIdx].name === targetBranch || BRANCHES[jiaoYearIdx].name === targetBranch ||
-        BRANCHES[gouDayIdx].name === targetBranch || BRANCHES[jiaoDayIdx].name === targetBranch) result.push("勾绞煞");
+    if (targetIndex !== 0 &&
+        (BRANCHES[gouYearIdx].name === targetBranch || BRANCHES[jiaoYearIdx].name === targetBranch)) result.push("勾绞煞");
 
     const yangStems = ["甲", "丙", "戊", "庚", "壬"];
     const isYearYang = yangStems.includes(yearStem);
-    const isDayYang = yangStems.includes(dayStem);
     const yearForward = (isYearYang && gender === "male") || (!isYearYang && gender === "female");
     const yuanchenYearIdx = mod(BRANCHES.findIndex((item) => item.name === yearBranch) + (yearForward ? 7 : 5), 12);
-    const dayForward = (isDayYang && gender === "male") || (!isDayYang && gender === "female");
-    const yuanchenDayIdx = mod(BRANCHES.findIndex((item) => item.name === dayBranch) + (dayForward ? 7 : 5), 12);
-    if (BRANCHES[yuanchenYearIdx].name === targetBranch || BRANCHES[yuanchenDayIdx].name === targetBranch) result.push("元辰");
+    if (targetIndex !== 0 && BRANCHES[yuanchenYearIdx].name === targetBranch) result.push("元辰");
 
     // 童子煞（时柱神煞，两套查法满足其一即是）
     // 口诀：春秋寅子贵，冬夏卯未辰；金木马卯合，水火鸡犬多，土命逢辰巳
