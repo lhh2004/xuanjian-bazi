@@ -576,3 +576,140 @@
     font-size: 22px;
   }
 }
+
+/* ===== 到账确认样式 ===== */
+.payment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.payment-item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  transition: border-color 0.2s;
+}
+
+.payment-item.reviewing {
+  border-color: color-mix(in srgb, var(--gold) 40%, var(--line));
+}
+
+.payment-item.paid {
+  border-color: color-mix(in srgb, var(--pine) 40%, var(--line));
+}
+
+.payment-item.failed {
+  border-color: color-mix(in srgb, var(--error) 40%, var(--line));
+}
+
+.payment-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.payment-order-no {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.payment-status {
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.payment-status.pending {
+  background: color-mix(in srgb, var(--muted) 15%, transparent);
+  color: var(--muted);
+}
+
+.payment-status.reviewing {
+  background: color-mix(in srgb, var(--gold) 15%, transparent);
+  color: var(--gold);
+}
+
+.payment-status.approved {
+  background: color-mix(in srgb, var(--pine) 15%, transparent);
+  color: var(--pine);
+}
+
+.payment-status.rejected {
+  background: color-mix(in srgb, var(--error) 15%, transparent);
+  color: var(--error);
+}
+
+.payment-status.cancelled {
+  background: color-mix(in srgb, var(--muted) 10%, transparent);
+  color: var(--muted);
+}
+
+.payment-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.payment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.payment-row span {
+  color: var(--muted);
+}
+
+.payment-row em {
+  font-style: normal;
+  color: var(--ink);
+}
+
+.payment-row strong {
+  color: var(--ink);
+}
+
+.payment-item-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+
+.payment-confirm-row {
+  display: flex;
+  gap: 8px;
+}
+
+.payment-amount-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.payment-amount-input:focus {
+  outline: none;
+  border-color: var(--pine);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pine) 15%, transparent);
+}
+
+.button.small {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.text-accent {
+  color: var(--pine);
+}
