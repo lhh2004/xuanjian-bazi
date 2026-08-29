@@ -60,6 +60,11 @@
             <span>提现审核</span>
             <span class="admin-nav-badge" id="pending-badge" hidden>0</span>
           </button>
+          <button class="admin-nav-item" data-admin-tab="payments" type="button">
+            <i data-lucide="receipt"></i>
+            <span>到账确认</span>
+            <span class="admin-nav-badge" id="payment-badge" hidden>0</span>
+          </button>
           <button class="admin-nav-item" data-admin-tab="codes" type="button">
             <i data-lucide="key"></i>
             <span>卡密管理</span>
@@ -155,6 +160,49 @@
               <div><span class="panel-kicker">提现列表</span><h2>全部申请</h2></div>
             </div>
             <div class="withdraw-list" id="admin-withdraw-list"></div>
+          </div>
+        </section>
+
+        <!-- 到账确认 -->
+        <section class="admin-tab-panel" id="admin-tab-payments">
+          <div class="admin-page-header">
+            <div>
+              <h1>到账确认</h1>
+              <p>确认微信/支付宝支付到账，金额匹配后自动解锁会员</p>
+            </div>
+            <div class="admin-filter-row">
+              <select id="payment-status-filter" class="region-select">
+                <option value="all">全部状态</option>
+                <option value="reviewing">待确认到账</option>
+                <option value="paid">已到账</option>
+                <option value="failed">到账失败</option>
+                <option value="pending">待支付</option>
+                <option value="cancelled">已取消</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-stats-grid small">
+            <div class="admin-stat-card">
+              <span class="stat-label">待确认到账</span>
+              <strong class="stat-value" id="stat-payment-reviewing">0</strong>
+              <span class="stat-unit">笔</span>
+            </div>
+            <div class="admin-stat-card">
+              <span class="stat-label">已到账金额</span>
+              <strong class="stat-value" id="stat-payment-paid">¥0.00</strong>
+            </div>
+            <div class="admin-stat-card">
+              <span class="stat-label">到账失败</span>
+              <strong class="stat-value" id="stat-payment-failed">0</strong>
+              <span class="stat-unit">笔</span>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-heading">
+              <div><span class="panel-kicker">支付订单</span><h2>到账管理</h2></div>
+              <p style="color:var(--muted);font-size:13px">输入微信/支付宝实际收到的金额，金额匹配后系统自动解锁会员</p>
+            </div>
+            <div class="payment-list" id="admin-payment-list"></div>
           </div>
         </section>
 
