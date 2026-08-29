@@ -20,7 +20,8 @@
     codes: "xuanjian-codes-v1",
     archives: "xuanjian-archives-v1",
     adminConfig: "xuanjian-admin-config-v1",
-    memberRecords: "xuanjian-member-records-v1"
+    memberRecords: "xuanjian-member-records-v1",
+    payments: "xuanjian_payments_v1"
   };
 
   // 提现配置默认值
@@ -48,7 +49,8 @@
     reviewAction: null,
     reviewWithdrawId: null,
     withdrawFilter: "all",
-    codeFilter: "all"
+    codeFilter: "all",
+    paymentFilter: "all"
   };
 
   // ========== 存储操作 ==========
@@ -106,6 +108,18 @@
 
   function getMemberRecords() {
     return getStorage(STORAGE_KEYS.memberRecords, []);
+  }
+
+  function getPayments() {
+    return getStorage(STORAGE_KEYS.payments, []);
+  }
+
+  function savePayments(list) {
+    setStorage(STORAGE_KEYS.payments, list);
+  }
+
+  function getPaymentConfig() {
+    return getStorage("xuanjian_payconfig_v1", { wechatQr: "", alipayQr: "", payeeName: "", autoConfirm: false });
   }
 
   function getWithdrawConfig() {
@@ -203,6 +217,7 @@
     // 刷新对应Tab的数据
     if (tab === "dashboard") renderDashboard();
     if (tab === "withdraw") renderWithdrawList();
+    if (tab === "payments") renderPaymentList();
     if (tab === "codes") renderCodesList();
     if (tab === "wallet") renderWalletRecords();
     if (tab === "members") renderMemberRecords();
@@ -215,17 +230,29 @@
     const codes = getCodes();
     const wallet = getWallet();
     const member = getMemberState();
+    const payments = getPayments();
 
     const pendingCount = withdrawals.filter((w) => w.status === "pending").length;
     const approvedTotal = withdrawals
       .filter((w) => w.status === "approved")
       .reduce((s, w) => s + Number(w.actualAmount), 0);
     const availableCodes = codes.filter((c) => !c.used && new Date(c.expireAt) > new Date()).length;
+    const reviewingPayments = payments.filter((p) => p.status === "pending" || p.status === "reviewing");
+    const paidTotal = payments
+      .filter((p) => p.status === "paid")
+      .reduce((s, p) => s + Number(p.receivedAmount || p.amount), 0);
+
+    const paymentBadge = $("#payment-badge");
+    if (paymentBadge) {
+      const reviewingCount = payments.filter((p) => p.status === "reviewing").length;
+      paymentBadge.textContent = reviewingCount;
+      paymentBadge.hidden = reviewingCount === 0;
+    }
 
     const stats = [
+      { label: "待确认到账", value: reviewingPayments.length, unit: "笔", icon: "receipt" },
+      { label: "已到账金额", value: `¥${paidTotal.toFixed(2)}`, icon: "banknote" },
       { label: "待审核提现", value: pendingCount, unit: "笔", icon: "clock" },
-      { label: "累计打款", value: `¥${approvedTotal.toFixed(2)}`, icon: "banknote" },
-      { label: "可用卡密", value: availableCodes, unit: "张", icon: "key" },
       { label: "钱包余额", value: `¥${Number(wallet.balance).toFixed(2)}`, icon: "wallet" }
     ];
 
@@ -436,6 +463,251 @@
     renderWithdrawList();
     renderDashboard();
     showToast(action === "approve" ? "已确认打款" : "已拒绝申请", "check");
+  }
+
+  // ========== 到账确认 ==========
+  const PAYMENT_STATUS_MAP = {
+    pending: { label: "待支付", class: "pending" },
+    reviewing: { label: "待确认到账", class: "reviewing" },
+    paid: { label: "已到账", class: "approved" },
+    failed: { label: "到账失败", class: "rejected" },
+    cancelled: { label: "已取消", class: "cancelled" },
+    refunded: { label: "已退款", class: "cancelled" },
+    expired: { label: "已过期", class: "cancelled" }
+  };
+
+  function renderPaymentList() {
+    const payments = getPayments();
+    const filter = state.paymentFilter || "all";
+
+    let list = payments;
+    if (filter !== "all") {
+      list = payments.filter((p) => p.status === filter);
+    }
+
+    const reviewing = payments.filter((p) => p.status === "reviewing");
+    const paid = payments.filter((p) => p.status === "paid");
+    const failed = payments.filter((p) => p.status === "failed");
+
+    const paidTotal = paid.reduce((s, p) => s + Number(p.receivedAmount || p.amount), 0);
+
+    const elReviewing = $("#stat-payment-reviewing");
+    const elPaid = $("#stat-payment-paid");
+    const elFailed = $("#stat-payment-failed");
+    if (elReviewing) elReviewing.textContent = reviewing.length;
+    if (elPaid) elPaid.textContent = `¥${paidTotal.toFixed(2)}`;
+    if (elFailed) elFailed.textContent = failed.length;
+
+    const badge = $("#payment-badge");
+    if (badge) {
+      badge.textContent = reviewing.length;
+      badge.hidden = reviewing.length === 0;
+    }
+
+    const listEl = $("#admin-payment-list");
+    if (!listEl) return;
+
+    if (list.length === 0) {
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <i data-lucide="receipt"></i>
+          <span>暂无支付订单</span>
+        </div>`;
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+
+    listEl.innerHTML = list.slice(0, 100).map((p) => {
+      const st = PAYMENT_STATUS_MAP[p.status] || { label: p.status, class: "" };
+      const created = new Date(p.createdAt).toLocaleString("zh-CN");
+      const paid = p.paidAt ? new Date(p.paidAt).toLocaleString("zh-CN") : null;
+      const methodIcon = p.method === "wechat" ? "message-circle" : "credit-card";
+      const methodName = p.method === "wechat" ? "微信支付" : "支付宝";
+      const receivedAmount = p.receivedAmount != null ? Number(p.receivedAmount).toFixed(2) : null;
+      const orderAmount = Number(p.amount).toFixed(2);
+      const canConfirm = p.status === "pending" || p.status === "reviewing";
+      const canFail = p.status === "pending" || p.status === "reviewing";
+
+      return `
+        <div class="payment-item ${st.class}">
+          <div class="payment-item-head">
+            <div class="payment-order-no">
+              <i data-lucide="${methodIcon}" style="width:16px;height:16px"></i>
+              <span>${p.orderNo}</span>
+            </div>
+            <span class="payment-status ${st.class}">${st.label}</span>
+          </div>
+          <div class="payment-item-body">
+            <div class="payment-row">
+              <span>套餐</span>
+              <em>${p.planName || "-"}</em>
+            </div>
+            <div class="payment-row">
+              <span>支付方式</span>
+              <em>${methodName}</em>
+            </div>
+            <div class="payment-row">
+              <span>订单金额</span>
+              <strong>¥${orderAmount}</strong>
+            </div>
+            ${receivedAmount ? `
+            <div class="payment-row">
+              <span>到账金额</span>
+              <strong class="text-accent">¥${receivedAmount}</strong>
+            </div>` : ""}
+            <div class="payment-row">
+              <span>创建时间</span>
+              <em>${created}</em>
+            </div>
+            ${paid ? `
+            <div class="payment-row">
+              <span>到账时间</span>
+              <em>${paid}</em>
+            </div>` : ""}
+            ${p.activated ? `
+            <div class="payment-row">
+              <span>会员状态</span>
+              <strong class="text-accent">已自动解锁</strong>
+            </div>` : ""}
+            ${p.failReason ? `
+            <div class="payment-row">
+              <span>失败原因</span>
+              <em style="color:var(--danger)">${p.failReason}</em>
+            </div>` : ""}
+          </div>
+          ${canConfirm || canFail ? `
+          <div class="payment-item-actions">
+            ${canConfirm ? `
+            <div class="payment-confirm-row">
+              <input type="number" class="payment-amount-input" placeholder="输入实际到账金额" step="0.01" min="0" data-payment-order="${p.orderNo}" />
+              <button class="button primary small" data-confirm-payment="${p.orderNo}" type="button">
+                <i data-lucide="check-circle"></i>确认到账
+              </button>
+            </div>` : ""}
+            ${canFail ? `
+            <button class="button ghost small" data-fail-payment="${p.orderNo}" type="button" style="margin-top:8px">
+              <i data-lucide="x-circle"></i>标记未到账
+            </button>` : ""}
+          </div>` : ""}
+        </div>
+      `;
+    }).join("");
+
+    if (window.lucide) lucide.createIcons();
+
+    // 绑定确认到账按钮
+    $$("[data-confirm-payment]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const orderNo = btn.dataset.confirmPayment;
+        const input = $(`[data-payment-order="${orderNo}"]`);
+        const amount = input ? input.value : "";
+        handleConfirmPayment(orderNo, amount);
+      });
+    });
+
+    // 绑定标记失败按钮
+    $$("[data-fail-payment]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const orderNo = btn.dataset.failPayment;
+        handleFailPayment(orderNo);
+      });
+    });
+  }
+
+  function handleConfirmPayment(orderNo, receivedAmountStr) {
+    const amount = Number(receivedAmountStr);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      showToast("请输入有效的到账金额", "alert");
+      return;
+    }
+
+    const payments = getPayments();
+    const idx = payments.findIndex((p) => p.orderNo === orderNo);
+    if (idx === -1) {
+      showToast("订单不存在", "alert");
+      return;
+    }
+
+    const order = payments[idx];
+    const orderAmount = Number(order.amount);
+
+    // 金额不足，无法解锁
+    if (amount < orderAmount) {
+      order.status = "failed";
+      order.receivedAmount = amount;
+      order.failReason = `到账金额不足：需 ¥${orderAmount.toFixed(2)}，实到 ¥${amount.toFixed(2)}`;
+      order.failedAt = Date.now();
+      payments[idx] = order;
+      savePayments(payments);
+      renderPaymentList();
+      renderDashboard();
+      showToast(`到账金额不足（¥${amount.toFixed(2)} < ¥${orderAmount.toFixed(2)}），无法解锁`, "alert");
+      return;
+    }
+
+    // 金额匹配，确认到账并自动解锁会员
+    order.status = "paid";
+    order.paidAt = Date.now();
+    order.receivedAmount = amount;
+
+    // 自动激活会员
+    const member = getMemberState();
+    const base = (member && !member.expired && member.expireAt) ? member.expireAt : Date.now();
+    const plan = MEMBER_PLANS[order.planKey] || { key: order.planKey, name: order.planName, days: 30 };
+
+    const nextMember = {
+      plan: plan.key,
+      planName: plan.name,
+      activatedAt: Date.now(),
+      expireAt: base + plan.days * 86400000,
+      source: `支付订单 ${orderNo}（到账 ¥${amount.toFixed(2)}）`
+    };
+    setStorage(STORAGE_KEYS.member, nextMember);
+
+    // 记录会员开通记录
+    const records = getMemberRecords();
+    records.unshift({
+      userId: order.userId || "local-user",
+      userName: order.userName || "本地用户",
+      plan: plan.key,
+      planName: plan.name,
+      days: plan.days,
+      activatedAt: Date.now(),
+      createdAt: Date.now(),
+      source: "payment",
+      orderNo: orderNo,
+      receivedAmount: amount
+    });
+    setStorage(STORAGE_KEYS.memberRecords, records.slice(0, 200));
+
+    order.activated = true;
+    payments[idx] = order;
+    savePayments(payments);
+
+    renderPaymentList();
+    renderDashboard();
+    showToast(`到账 ¥${amount.toFixed(2)} 确认成功，会员已自动解锁`, "check");
+  }
+
+  function handleFailPayment(orderNo) {
+    if (!confirm("确认标记此订单为未到账？用户将无法解锁会员。")) return;
+
+    const payments = getPayments();
+    const idx = payments.findIndex((p) => p.orderNo === orderNo);
+    if (idx === -1) return;
+
+    const order = payments[idx];
+    if (order.status !== "pending" && order.status !== "reviewing") return;
+
+    order.status = "failed";
+    order.failReason = "管理员确认未收到款项";
+    order.failedAt = Date.now();
+    payments[idx] = order;
+    savePayments(payments);
+
+    renderPaymentList();
+    renderDashboard();
+    showToast("已标记为未到账", "alert");
   }
 
   // ========== 卡密管理 ==========
@@ -878,6 +1150,15 @@
       state.withdrawFilter = e.target.value;
       renderWithdrawList();
     });
+
+    // 支付订单过滤
+    const paymentFilter = $("#payment-status-filter");
+    if (paymentFilter) {
+      paymentFilter.addEventListener("change", (e) => {
+        state.paymentFilter = e.target.value;
+        renderPaymentList();
+      });
+    }
 
     // 提现列表操作（事件委托）
     $("#admin-withdraw-list").addEventListener("click", (e) => {
