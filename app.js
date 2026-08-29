@@ -386,7 +386,7 @@
     return { ok: true, order };
   }
 
-  function markPaymentPaid(orderNo) {
+  function markPaymentPaid(orderNo, receivedAmount) {
     const payments = getPayments();
     const idx = payments.findIndex((p) => p.orderNo === orderNo);
     if (idx === -1) return { ok: false, error: "订单不存在" };
@@ -396,22 +396,98 @@
       return { ok: false, error: "订单状态不正确" };
     }
 
+    // 必须提供到账金额且金额匹配才能解锁
+    const received = Number(receivedAmount);
+    if (!Number.isFinite(received) || received <= 0) {
+      return { ok: false, error: "请输入有效的到账金额" };
+    }
+    if (received < Number(order.amount)) {
+      return { ok: false, error: `到账金额不足，订单需付 ¥${Number(order.amount).toFixed(2)}，实际到账 ¥${received.toFixed(2)}` };
+    }
+
     order.status = "paid";
     order.paidAt = Date.now();
-    addStatusHistory(order, "paid", "确认到账");
+    order.receivedAmount = received;
+    addStatusHistory(order, "paid", `确认到账 ¥${received.toFixed(2)}`);
     payments[idx] = order;
     savePayments(payments);
 
-    // 自动激活会员
-    const result = activateMembership(order.planKey, `支付订单 ${orderNo}`);
+    // 到账金额匹配，自动激活会员
+    const result = activateMembership(order.planKey, `支付订单 ${orderNo}（到账 ¥${received.toFixed(2)}）`);
     if (result.ok) {
       order.activated = true;
-      addStatusHistory(order, "activated", "会员已开通");
+      addStatusHistory(order, "activated", "到账金额匹配，会员已自动开通");
       payments[idx] = order;
       savePayments(payments);
     }
 
     return { ok: true, order };
+  }
+
+  // 到账确认：管理员输入实际到账金额，金额匹配后自动解锁会员
+  function confirmPaymentReceived(orderNo, receivedAmount) {
+    const payments = getPayments();
+    const idx = payments.findIndex((p) => p.orderNo === orderNo);
+    if (idx === -1) return { ok: false, error: "订单不存在" };
+
+    const order = payments[idx];
+    if (order.status !== "pending" && order.status !== "reviewing") {
+      return { ok: false, error: "订单状态不正确，无法确认到账" };
+    }
+
+    const received = Number(receivedAmount);
+    if (!Number.isFinite(received) || received <= 0) {
+      return { ok: false, error: "请输入有效的到账金额" };
+    }
+
+    // 到账金额必须 >= 订单金额才能解锁
+    if (received < Number(order.amount)) {
+      // 金额不足，标记为支付失败
+      order.status = "failed";
+      order.receivedAmount = received;
+      addStatusHistory(order, "failed", `到账金额不足：需 ¥${Number(order.amount).toFixed(2)}，实到 ¥${received.toFixed(2)}`);
+      payments[idx] = order;
+      savePayments(payments);
+      return { ok: false, error: `到账金额不足，无法解锁。订单需付 ¥${Number(order.amount).toFixed(2)}，实际到账仅 ¥${received.toFixed(2)}` };
+    }
+
+    // 金额匹配，确认到账并自动解锁
+    order.status = "paid";
+    order.paidAt = Date.now();
+    order.receivedAmount = received;
+    addStatusHistory(order, "paid", `确认到账 ¥${received.toFixed(2)}`);
+    payments[idx] = order;
+    savePayments(payments);
+
+    const result = activateMembership(order.planKey, `支付订单 ${orderNo}（到账 ¥${received.toFixed(2)}）`);
+    if (result.ok) {
+      order.activated = true;
+      addStatusHistory(order, "activated", "到账金额匹配，会员已自动开通");
+      payments[idx] = order;
+      savePayments(payments);
+    }
+
+    return { ok: true, order, member: result };
+  }
+
+  // 标记支付失败（未到账）
+  function markPaymentFailed(orderNo, reason) {
+    const payments = getPayments();
+    const idx = payments.findIndex((p) => p.orderNo === orderNo);
+    if (idx === -1) return { ok: false, error: "订单不存在" };
+
+    const order = payments[idx];
+    if (order.status !== "pending" && order.status !== "reviewing") {
+      return { ok: false, error: "订单状态不正确" };
+    }
+
+    order.status = "failed";
+    order.failReason = reason || "未收到款项";
+    order.failedAt = Date.now();
+    addStatusHistory(order, "failed", reason || "未收到款项");
+    payments[idx] = order;
+    savePayments(payments);
+    return { ok: true };
   }
 
   function cancelPayment(orderNo) {
@@ -1370,7 +1446,7 @@
 
         if (payConfig.autoConfirm) {
           // 演示模式：自动确认到账（仅用于测试演示）
-          const payResult = markPaymentPaid(currentPaymentOrder.orderNo);
+          const payResult = markPaymentPaid(currentPaymentOrder.orderNo, currentPaymentOrder.amount);
           if (payResult.ok) {
             clearInterval(paymentCountdownTimer);
             showPaymentSuccess(payResult.order);
@@ -6961,6 +7037,8 @@
     savePayments,
     createPaymentOrder,
     markPaymentPaid,
+    confirmPaymentReceived,
+    markPaymentFailed,
     cancelPayment,
     refundPayment,
     submitPaymentForReview,
